@@ -1,39 +1,37 @@
 from datetime import datetime
-from sqlalchemy import Column, Table, Boolean, ForeignKey, String, MetaData, Sequence, Integer
-from sqlalchemy.sql.sqltypes import DateTime
-from app import engine
+from sqlalchemy import Column, Table, Boolean, ForeignKey, String, MetaData, Sequence, Integer, DateTime
+from sqlalchemy.ext.declarative import declarative_base
 
-metadata = MetaData()
 
-# Handles user data
-users = Table(
-    'users', metadata,
-    Column('id', Integer(), Sequence('user_id'), primary_key=True),
-    Column('name', String(100), nullable=False),
-    Column('phone_number', String(20), nullable=False, unique=True),
-    Column('email', String(100), nullable=False, unique=True),
-    Column('alternate_email', String(100)),
+Base = declarative_base()
 
-    Column('activated', Boolean(), default=False),
-    Column('password', String(100)),
-    Column('invite_code', String(100), nullable=False),
-    Column('invited_at', DateTime(), default=datetime.now()),
-)
 
-# Handles Organization data
-organizations = Table(
-    'organizations', metadata,
-    Column('id', Integer(), Sequence('organization_id'), primary_key=True),
-    Column('user', ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
-    Column('name', String(100), nullable=False),
-    Column('role', String(100), nullable=False),
-    Column('valid_till', DateTime()),
-)
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer(), Sequence('user_id'), primary_key=True)
+    name = Column(String(100), nullable=False)
+    phone_number = Column(String(20), nullable=False, unique=True)
+    email = Column(String(100), nullable=False, unique=True)
+    alternate_email = Column(String(100))
 
-# Handles login data
-sessions = Table(
-    'sessions', metadata,
-    Column('user', ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
-    Column('token', String(100), nullable=False, unique=True),
-    Column('created_at', DateTime(), default=datetime.now()),
-)
+    activated = Column(Boolean(), default=False)
+    password = Column(String(100))
+    invite_code = Column(String(100), nullable=False)
+    invited_at = Column(DateTime(), default=datetime.now())
+
+
+class Organization(Base):
+    __tablename__ = 'organizations'
+    id = Column(Integer(), Sequence('organization_id'), primary_key=True)
+    user = Column(ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    ame = Column(String(100), nullable=False)
+    role = Column(String(100), nullable=False)
+    valid_till = Column(DateTime())
+
+
+class Session(Base):
+    __tablename__ = 'sessions'
+    id = Column(Integer(), Sequence('session_id'), primary_key=True)
+    user = Column(ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    token = Column(String(100), nullable=False, unique=True)
+    created_at = Column(DateTime(), default=datetime.now())
