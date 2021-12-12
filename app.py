@@ -32,7 +32,7 @@ async def invite(data: dict):
             { \\
                - `name`: Name of the organization (Required, Max Length: 100) \\
                - `role`: Role of the user in the organization (Required, Max Length: 100) \\
-               - `valid_till`: Date when the user will be valid till (Optional, Max Length: 100) \\
+               - `valid_till`: Date when the user will be valid till (Optional) \\
             } \\
             . \\
             . \\
@@ -181,16 +181,22 @@ async def login(data: dict):
 
 
 @app.post("/logout", tags=["Logout"])
-async def logout(token: str):
+async def logout(data: dict):
     """
     Logs out a user.
 
     - ## Parameters:
-        - `token`: Token of the user (Required, Max Length: 100)
+        - `token`: Token to be used for verifying the user (Required, Max Length: 100)
 
     - ## Returns:
         - `message`: Success message if the user is logged out successfully
     """
+    # Reads token from data
+    token = data.get("token", False)
+
+    # Checks if token is present
+    if not token:
+        return {"error": "Token missing"}
     # Fetches the session from the database
     session = db.query(Session).filter(
         Session.token == token).first()
@@ -230,7 +236,7 @@ def edit(data: dict):
             { \\
                - `name`: Name of the organization (Required, Max Length: 100) \\
                - `role`: Role of the user in the organization (Required, Max Length: 100) \\
-               - `valid_till`: Date when the user will be valid till (Optional, Max Length: 100) \\
+               - `valid_till`: Date when the user will be valid till (Optional) \\
             } \\
             . \\
             . \\
