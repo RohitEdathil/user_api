@@ -20,13 +20,17 @@ pip install -r requirements.txt
   - `SQL_PASSWORD` : password of the database
   - `SQL_DATABASE` : name of the database
   - `SALT` : salt for password hashing
-
+- ## Create tables
+  Run the command to create the tables.
+ ```
+ python rebuild_tables.py
+ ```
 # Usage
 
 All the scripts use the environment variables to connect to the database. So make sure to set them up before running the scripts.
 
 - ### app&#46;py
-  Contains all the main functions of the api.
+  Contains all the main functions of the API.
 
 Run the app using (In development mode)
 
@@ -45,8 +49,8 @@ Run the script using
 python data_cleanup.py
 ```
 
-- ### rebuld_tables.py
-  Runs a script to automatically rebuild the tables in the database. **It will drop all the tables and creates them agin**.
+- ### rebuild_tables.py
+  Runs a script to automatically rebuild the tables in the database. **It will drop all the tables and creates them again**.
   This script should only be run when the model is updated.
 
 Run the script using
