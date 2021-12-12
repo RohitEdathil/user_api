@@ -86,8 +86,51 @@ async def invite(data: dict):
     return {"invite_code": invite_code, "expires_at": invited_at + INVITE_LIFE}
 
 
+@app.post("/create", tags=["Create"])
+async def create(data: dict):
+    """
+    Signs up a user with an invitation code.
+
+    - ## Parameters:
+        - `invite_code`: Invitation code (Required, Max Length: 10)
+        - `password`: Password of the user (Required, Max Length: 100)
+
+    - ## Returns:
+        - `message`: Success message if the user is signed up successfully
+    """
+    # Fetches the user from the database
+    user = db.query(User).filter(
+        User.invite_code == data.get("invite_code", '')).first()
+
+    # Returns error message if the user is not found
+    if not user:
+        return {"error": "Invalid invite code"}
+
+    # Reads password from the data
+    password = data.get("password", False)
+    # Returns error message if the password is not provided
+    if not password:
+        return {"error": "Password is required"}
+
+    # Sets the password , sets user as active and removes the invite code
+    user.activated = True
+    user.invite_code = ''
+    user.password = hash_password(password)
+
+    # Commits the changes to the database
+    try:
+        db.commit()
+    except OperationalError as e:
+        db.rollback()
+        return {"error": e.orig.args[1]}
+
+    # Returns success message
+    return {"message": "User created successfully"}
+
 # TODO: Remove this endpoint in production
-@ app.post("/query")
+
+
+@app.post("/query")
 def query(data: dict):
     """
     Execute SQL queries.

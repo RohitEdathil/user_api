@@ -20,7 +20,7 @@ if __name__ == "__main__":
         map(db.delete, db.query(Session).filter(
             Session.created_at < datetime.now() - SESSION_LIFE).all())
         map(db.delete, db.query(User).filter(
-            User.invited_at < datetime.now() - INVITE_LIFE).all())
+            User.invited_at < datetime.now() - INVITE_LIFE and not User.activated).all())
         print("Next cleanup at {}".format(
             datetime.now() + timedelta(minutes=INTERVAL)))
         sleep(60 * INTERVAL)

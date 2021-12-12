@@ -16,7 +16,7 @@ class User(Base):
 
     activated = Column(Boolean(), default=False)
     password = Column(String(100))
-    invite_code = Column(String(100), nullable=False)
+    invite_code = Column(String(10), nullable=False)
     invited_at = Column(DateTime(), nullable=False)
 
 

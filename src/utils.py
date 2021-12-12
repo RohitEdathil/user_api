@@ -1,10 +1,20 @@
 
 from re import compile, fullmatch
+from os import environ
+from argon2 import PasswordHasher
 import random
 import string
 ph_regex = compile(r'(^[+0-9]{1,3})*([0-9]{10,11}$)')
 email_regex = compile(
     r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b')
+
+hasher = PasswordHasher()
+
+try:
+    SALT = environ['SALT']
+except KeyError:
+    print('SALT environment variable not set.')
+    exit(1)
 
 
 def is_phone_number(num: str) -> bool:
@@ -31,3 +41,10 @@ def generate_invite_code() -> str:
     """
     return ''.join(random.choice(string.ascii_uppercase + string.digits)
                    for _ in range(6))
+
+
+def hash_password(password: str) -> str:
+    """
+    Hashes the given password.
+    """
+    return hasher.hash(password + SALT)
