@@ -1,5 +1,5 @@
 from src.models import Base
-from app import engine
+from src.engine import engine
 """
 Run this script to rebuild the tables in the database. If the model has changed.
 Beware that this will delete all data in the database.

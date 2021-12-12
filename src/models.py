@@ -17,14 +17,14 @@ class User(Base):
     activated = Column(Boolean(), default=False)
     password = Column(String(100))
     invite_code = Column(String(100), nullable=False)
-    invited_at = Column(DateTime(), default=datetime.now())
+    invited_at = Column(DateTime(), nullable=False)
 
 
 class Organization(Base):
     __tablename__ = 'organizations'
     id = Column(Integer(), Sequence('organization_id'), primary_key=True)
     user = Column(ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    ame = Column(String(100), nullable=False)
+    name = Column(String(100), nullable=False)
     role = Column(String(100), nullable=False)
     valid_till = Column(DateTime())
 
