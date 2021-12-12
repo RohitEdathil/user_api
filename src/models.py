@@ -34,4 +34,4 @@ class Session(Base):
     id = Column(Integer(), Sequence('session_id'), primary_key=True)
     user = Column(ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     token = Column(String(100), nullable=False, unique=True)
-    created_at = Column(DateTime(), default=datetime.now())
+    created_at = Column(DateTime(), nullable=False)

@@ -112,6 +112,9 @@ async def create(data: dict):
     if not password:
         return {"error": "Password is required"}
 
+    # Checks if the invite code expired
+    if user.invited_at + INVITE_LIFE < datetime.now():
+        return {"error": "Invite code expired"}
     # Sets the password , sets user as active and removes the invite code
     user.activated = True
     user.invite_code = ''
@@ -126,6 +129,51 @@ async def create(data: dict):
 
     # Returns success message
     return {"message": "User created successfully"}
+
+
+@app.post("/login", tags=["Login"])
+async def login(data: dict):
+    """
+    Logs in a user.
+
+    - ## Parameters:
+        - `email`: Email of the user (Required, Max Length: 100)
+        - `password`: Password of the user (Required, Max Length: 100)
+
+    - ## Returns:
+        - `token`: Token to be used for verifying the user
+        - `expires_at`: Date and time when the token expires
+    """
+    # Fetches the user from the database
+    user = db.query(User).filter(
+        User.email == data.get("email", '')).first()
+
+    # Returns error message if the user is not found
+    if not user:
+        return {"error": "Invalid email or password"}
+
+    # Reads password from the data
+    password = data.get("password", False)
+
+    # Returns error message if the password is not provided
+    if not password:
+        return {"error": "Password is required"}
+
+    # Checks if the password is correct
+    if not check_password(password, user.password):
+        return {"error": "Invalid email or password"}
+
+    # Issues a token and time of login
+    token = generate_token()
+    created_at = datetime.now()
+
+    # Adds the session to the database
+    db.add(Session(user=user.id, created_at=created_at, token=token))
+    db.commit()
+
+    # Returns success message
+    return {"token": token, "expires_at": created_at + SESSION_LIFE}
+
 
 # TODO: Remove this endpoint in production
 
