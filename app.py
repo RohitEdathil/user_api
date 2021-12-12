@@ -114,6 +114,8 @@ async def create(data: dict):
 
     # Checks if the invite code expired
     if user.invited_at + INVITE_LIFE < datetime.now():
+        db.delete(user)
+        db.commit()
         return {"error": "Invite code expired"}
     # Sets the password , sets user as active and removes the invite code
     user.activated = True
@@ -173,6 +175,39 @@ async def login(data: dict):
 
     # Returns success message
     return {"token": token, "expires_at": created_at + SESSION_LIFE}
+
+
+@app.post("/logout", tags=["Logout"])
+async def logout(token: str):
+    """
+    Logs out a user.
+
+    - ## Parameters:
+        - `token`: Token of the user (Required, Max Length: 100)
+
+    - ## Returns:
+        - `message`: Success message if the user is logged out successfully
+    """
+    # Fetches the user from the database
+    session = db.query(Session).filter(
+        Session.token == token).first()
+
+    # Returns error message if the session is not found
+    if not session:
+        return {"error": "Invalid token"}
+
+    # Checks if the token is expired
+    if session.created_at + SESSION_LIFE < datetime.now():
+        db.delete(session)
+        db.commit()
+        return {"error": "Token already expired"}
+
+    # Removes the session from the database
+    db.delete(session)
+    db.commit()
+
+    # Returns success message
+    return {"message": "User logged out successfully"}
 
 
 # TODO: Remove this endpoint in production
