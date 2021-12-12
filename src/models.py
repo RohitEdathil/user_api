@@ -1,5 +1,4 @@
-from datetime import datetime
-from sqlalchemy import Column, Table, Boolean, ForeignKey, String, MetaData, Sequence, Integer, DateTime
+from sqlalchemy import Column,  Boolean, ForeignKey, String, Sequence, Integer, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 
 
@@ -13,6 +12,7 @@ class User(Base):
     phone_number = Column(String(20), nullable=False, unique=True)
     email = Column(String(100), nullable=False, unique=True)
     alternate_email = Column(String(100))
+    profile_pic = Column(String(200))
 
     activated = Column(Boolean(), default=False)
     password = Column(String(100))

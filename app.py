@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from sqlalchemy.exc import OperationalError, IntegrityError
+from datetime import datetime
 from data_cleanup import INVITE_LIFE, SESSION_LIFE
 from src.models import *
 from src.utils import *
@@ -35,7 +36,7 @@ async def invite(data: dict):
             } \\
             . \\
             . \\
-        ]
+        ] (Must be inside a List, Optional)
     - ## Returns:
         - `invite_id`: Unique code to be for signing up
         - `expires_at`: Date and time when the invitation expires
@@ -72,7 +73,9 @@ async def invite(data: dict):
                 db.add(org)
         # Commits the changes to the database
         db.commit()
-
+    except TypeError:
+        db.rollback()
+        return {"error": "Bad formatting (Organizations must be inside a list)"}
     except OperationalError as e:
         # Detects missing values and returns error message
         db.rollback()
@@ -188,7 +191,7 @@ async def logout(token: str):
     - ## Returns:
         - `message`: Success message if the user is logged out successfully
     """
-    # Fetches the user from the database
+    # Fetches the session from the database
     session = db.query(Session).filter(
         Session.token == token).first()
 
@@ -210,12 +213,91 @@ async def logout(token: str):
     return {"message": "User logged out successfully"}
 
 
-# TODO: Remove this endpoint in production
-
-
-@app.post("/query")
-def query(data: dict):
+@app.post("/edit", tags=["Edit"])
+def edit(data: dict):
     """
-    Execute SQL queries.
+    Edits the info of the currently logged in user.
+
+    - ## Parameters:
+        - `token` : A valid token obtained at the time of login
+        - `name`: Name of the user (Optional, Max Length: 100)
+        - `phone`: Phone number of the user (Optional, Max Length: 20)
+        - `email`: Email of the user (Optional, Max Length: 100)
+        - `alternate_email`: Alternate email of the user (Optional, Max Length: 100)
+        - `profile_pic`: URL to the profile picture of the user (Optional, Max Length: 200)
+        - `organizations`: [
+
+            { \\
+               - `name`: Name of the organization (Required, Max Length: 100) \\
+               - `role`: Role of the user in the organization (Required, Max Length: 100) \\
+               - `valid_till`: Date when the user will be valid till (Optional, Max Length: 100) \\
+            } \\
+            . \\
+            . \\
+        ] (Must be inside a List, Optional, If provided all the existing roles of the user will be overwritten)
+    - ## Returns:
+        - `message`: Success message if editted successfully
     """
-    return engine.execute(data['query']).fetchall().__str__()
+    # Reads token from data
+    token = data.get("token", False)
+
+    # Checks if token is present
+    if not token:
+        return {"error": "Token missing"}
+
+    # Fetches the session from the database
+    session = db.query(Session).filter(
+        Session.token == token).first()
+
+    # Returns error message if the session is not found
+    if not session:
+        return {"error": "Invalid token"}
+
+    # Checks if the token is expired
+    if session.created_at + SESSION_LIFE < datetime.now():
+        db.delete(session)
+        db.commit()
+        return {"error": "Token already expired"}
+
+    # Fetches user of correspnding session
+    user = db.query(User).filter(User.id == session.user).first()
+
+    # Modify the fields
+    user.name = data.get("name", user.name)
+    user.email = data.get("email", user.email)
+    user.phone_number = data.get("phone_number", user.phone_number)
+    user.alternate_email = data.get("alternate_email", user.alternate_email)
+    user.profile_pic = data.get("profile_pic", user.profile_pic)
+
+    # Extracts organizations from the data
+    organizations = data.pop("organizations", False)
+
+    # Saves changes
+    try:
+        # Removes all previous organizations
+        prev_orgs = db.query(Organization).filter(
+            Organization.user == user.id).all()
+        for org in prev_orgs:
+            db.delete(org)
+
+        # Adds the organizations to the database
+        if organizations:
+            for organization in organizations:
+                org = Organization(**organization)
+                org.user = user.id
+                db.add(org)
+        # Commits the changes to the database
+        db.commit()
+    except TypeError:
+        db.rollback()
+        return {"error": "Bad formatting (Organizations must be inside a list)"}
+    except OperationalError as e:
+        # Detects missing values and returns error message
+        db.rollback()
+        return {"error": e.orig.args[1]}
+    except IntegrityError as e:
+        # Detects duplicate values and returns error message
+        db.rollback()
+        return {"error": e.orig.args[1]}
+
+    return {"message": "Changes saved"}

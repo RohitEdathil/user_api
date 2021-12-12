@@ -1,9 +1,10 @@
 from src.models import Base
-from src.engine import engine
+from src.engine import engine, db
 """
 Run this script to rebuild the tables in the database. If the model has changed.
 Beware that this will delete all data in the database.
 """
+
 print("Droping all tables")
 Base.metadata.drop_all(engine)
 print("Creating all tables")
